@@ -1,0 +1,174 @@
+MarsRover
+
+
+// Command Interface
+interface Command {
+    void execute(Rover rover);
+}
+
+// MoveCommand Class
+class MoveCommand implements Command {
+    @Override
+    public void execute(Rover rover) {
+        rover.move();
+    }
+}
+
+// TurnLeftCommand Class
+class TurnLeftCommand implements Command {
+    @Override
+    public void execute(Rover rover) {
+        rover.turnLeft();
+    }
+}
+
+// TurnRightCommand Class
+class TurnRightCommand implements Command {
+    @Override
+    public void execute(Rover rover) {
+        rover.turnRight();
+    }
+}
+
+// Direction Enum
+enum Direction {
+    NORTH, EAST, SOUTH, WEST;
+
+    public Direction turnLeft() {
+        switch (this) {
+            case NORTH: return WEST;
+            case WEST: return SOUTH;
+            case SOUTH: return EAST;
+            case EAST: return NORTH;
+        }
+        return null;
+    }
+
+    public Direction turnRight() {
+        switch (this) {
+            case NORTH: return EAST;
+            case EAST: return SOUTH;
+            case SOUTH: return WEST;
+            case WEST: return NORTH;
+        }
+        return null;
+    }
+
+    @Override
+    public String toString() {
+        switch (this) {
+            case NORTH: return "North";
+            case EAST: return "East";
+            case SOUTH: return "South";
+            case WEST: return "West";
+        }
+        return "";
+    }
+}
+
+// Grid Class
+class Grid {
+    private final int width;
+    private final int height;
+    private final boolean[][] obstacles;
+
+    public Grid(int width, int height, int[][] obstaclePositions) {
+        this.width = width;
+        this.height = height;
+        this.obstacles = new boolean[width][height];
+        for (int[] pos : obstaclePositions) {
+            if (pos[0] < width && pos[1] < height) {
+                obstacles[pos[0]][pos[1]] = true;
+            }
+        }
+    }
+
+    public boolean isObstacle(int x, int y) {
+        return x >= 0 && x < width && y >= 0 && y < height && obstacles[x][y];
+    }
+
+    public boolean isWithinBounds(int x, int y) {
+        return x >= 0 && x < width && y >= 0 && y < height;
+    }
+}
+
+// Rover Class
+class Rover {
+    private int x, y;
+    private Direction direction;
+    private final Grid grid;
+
+    public Rover(int startX, int startY, Direction startDirection, Grid grid) {
+        this.x = startX;
+        this.y = startY;
+        this.direction = startDirection;
+        this.grid = grid;
+    }
+
+    public void move() {
+        int newX = x, newY = y;
+        switch (direction) {
+            case NORTH: newY++; break;
+            case EAST: newX++; break;
+            case SOUTH: newY--; break;
+            case WEST: newX--; break;
+        }
+        if (grid.isWithinBounds(newX, newY) && !grid.isObstacle(newX, newY)) {
+            x = newX;
+            y = newY;
+        } else {
+            System.out.println("Move blocked by obstacle or boundary.");
+        }
+    }
+
+    public void turnLeft() {
+        direction = direction.turnLeft();
+        System.out.println("Turned left. Now facing " + direction);
+    }
+
+    public void turnRight() {
+        direction = direction.turnRight();
+
+    }
+
+    public String getStatus() {
+        return String.format("Rover is at (%d, %d) facing %s. No Obstacles detected.", x, y, direction);
+    }
+}
+
+// RoverCommandProcessor Class
+class RoverCommandProcessor {
+    private final Rover rover;
+
+    public RoverCommandProcessor(Rover rover) {
+        this.rover = rover;
+    }
+
+    public void processCommands(Command[] commands) {
+        for (Command command : commands) {
+            command.execute(rover);
+        }
+    }
+}
+
+// Main Class
+public class MarsRoverSimulation {
+    public static void main(String[] args) {
+        int gridWidth = 5;
+        int gridHeight = 5;
+        int[][] obstacles = {{2, 2}}; // Define obstacle position
+        Grid grid = new Grid(gridWidth, gridHeight, obstacles);
+
+        Rover rover = new Rover(1, 2, Direction.NORTH, grid);
+
+        Command[] commands = {
+            new MoveCommand(),      // Move to (1, 3)
+            new TurnRightCommand(), // Facing East
+        };
+
+        RoverCommandProcessor processor = new RoverCommandProcessor(rover);
+        processor.processCommands(commands);
+
+        System.out.println(rover.getStatus()); // Should output: Rover is at (1, 3) facing East
+    }
+}
